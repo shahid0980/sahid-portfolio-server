@@ -11,11 +11,11 @@ const app = express();
 
 app.disable("x-powered-by");
 app.use(helmet());
-// app.use(cors({
-//   origin: env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
-//   methods: ["GET", "POST"],
-//   allowedHeaders: ["Content-Type"]
-// }));
+app.use(cors({
+  origin: env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
 app.use(express.json({ limit: "10kb" }));
 
 
@@ -43,7 +43,7 @@ app.use("/api/chat", rateLimit({
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-const server = app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, "0.0.0.0", () => {
   console.log(`Portfolio chatbot API listening on port ${process.env.PORT}`);
 });
 
