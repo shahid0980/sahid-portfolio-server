@@ -11,12 +11,12 @@ const app = express();
 
 app.disable("x-powered-by");
 app.use(helmet());
-// app.use(cors({
-//   origin: process.env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
-//   methods: ["GET", "POST"],
-//   allowedHeaders: ["Content-Type"]
-// }));
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+// app.use(cors());
 app.use(express.json({ limit: "10kb" }));
 
 
