@@ -12,7 +12,7 @@ const app = express();
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
-  origin: env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
+  origin: process.env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
