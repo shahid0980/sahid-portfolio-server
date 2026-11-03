@@ -11,11 +11,25 @@ const app = express();
 
 app.disable("x-powered-by");
 app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+const allowedOrigins = [
+  "https://sahid-portfolio-ochre.vercel.app",
+  "http://localhost:5173",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header (e.g. server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json({ limit: "10kb" }));
 
 
