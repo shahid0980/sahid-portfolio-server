@@ -13,7 +13,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 const allowedOrigins = [
   "https://sahid-portfolio-ochre.vercel.app",
-  "http://localhost:5173",
+  "http://localhost:3000",
 ];
 
 app.use(
