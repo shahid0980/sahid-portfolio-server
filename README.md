@@ -1,55 +1,113 @@
 # Portfolio Chatbot Backend
 
-Node.js + Express + Google Gemini + PostgreSQL backend for Sahid Khan's React portfolio chatbot.
+Backend API for the AI chatbot on [Sahid Khan's portfolio](https://sahid-portfolio-ochre.vercel.app). It receives visitor questions from the React frontend, answers them with Google Gemini using a curated knowledge base about Sahid, and stores chat sessions in PostgreSQL so follow-up questions keep their context.
 
-## 1. Requirements
+**Frontend repository:** https://github.com/shahid0980/sahid-portfolio
+
+## Features
+
+- Chat endpoint powered by Google Gemini
+- Persistent chat sessions and messages in PostgreSQL
+- Server-side conversation history, so the browser only sends the latest message and a `sessionId`
+- Editable knowledge base in a single JavaScript file
+- Request validation with Zod
+- Security headers (Helmet), CORS restricted to your frontend origin, and rate limiting
+
+## Tech Stack
+
+| Area | Technology |
+|---|---|
+| Runtime | Node.js 20+ (ES modules) |
+| Framework | Express 5 |
+| AI | Google Gemini (`@google/genai`) |
+| Database | PostgreSQL 14+ (`pg`) |
+| Validation | Zod |
+| Security | Helmet, CORS, express-rate-limit |
+| Dev tooling | Nodemon |
+
+## Getting Started
+
+### Prerequisites
 
 - Node.js 20 or newer
 - PostgreSQL 14 or newer
 - A Google Gemini API key
 
-## 2. Install
+### 1. Clone and install
 
 ```bash
+git clone https://github.com/shahid0980/sahid-portfolio-server.git
+cd sahid-portfolio-server
 npm install
+```
+
+### 2. Configure environment variables
+
+```bash
 cp .env.example .env
 ```
 
-On Windows PowerShell, use:
+On Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Edit `.env` and set `GEMINI_API_KEY`, `DATABASE_URL`, and `FRONTEND_ORIGIN`.
+Then edit `.env`:
 
-Create the database in PostgreSQL:
+| Variable | Description |
+|---|---|
+| `GEMINI_API_KEY` | Your Google Gemini API key |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `FRONTEND_ORIGIN` | Allowed frontend origin for CORS. Use a comma-separated list for several origins |
+| `DB_SSL` | Set to `true` only if your PostgreSQL provider requires SSL |
+
+### 3. Create the database
 
 ```sql
 CREATE DATABASE portfolio_chatbot;
 ```
 
-Then initialize the tables:
+Then create the tables:
 
 ```bash
 npm run db:init
 ```
 
-## 3. Run locally
+### 4. Run the server
 
 ```bash
 npm run dev
 ```
 
-Health check:
+The API runs at `http://localhost:5000`.
 
-`GET http://localhost:5000/api/health`
+## Scripts
 
-Chat endpoint:
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the server with Nodemon (auto-reload) |
+| `npm start` | Start the server with Node |
+| `npm run db:init` | Create the database tables |
 
-`POST http://localhost:5000/api/chat/message`
+## API Reference
 
-Example request:
+### Health check
+
+```
+GET /api/health
+```
+
+Use this to confirm the server is running.
+
+### Send a chat message
+
+```
+POST /api/chat/message
+Content-Type: application/json
+```
+
+**First message**
 
 ```json
 {
@@ -57,7 +115,7 @@ Example request:
 }
 ```
 
-Example response:
+**Response**
 
 ```json
 {
@@ -67,7 +125,7 @@ Example response:
 }
 ```
 
-For a follow-up, send the returned `sessionId`:
+**Follow-up message** — send back the `sessionId` you received:
 
 ```json
 {
@@ -76,9 +134,11 @@ For a follow-up, send the returned `sessionId`:
 }
 ```
 
-The backend loads recent conversation history from PostgreSQL. Do not send conversation history from the browser.
+The server loads recent conversation history from PostgreSQL, so do not send history from the browser.
 
-## 4. React integration
+**Errors** return a non-2xx status with a body containing `error.message`.
+
+## Frontend Integration
 
 ```js
 const API_URL = "http://localhost:5000";
@@ -100,25 +160,50 @@ export async function sendChatMessage(message, sessionId) {
 }
 ```
 
-Keep the returned `sessionId` in React state and send it with the next message. For persistence across page refreshes, store it in sessionStorage or localStorage. The session ID is an identifier, not an authentication mechanism; add ownership controls if you later expose private user data.
+Keep the returned `sessionId` in React state and send it with each new message. To keep the conversation across page refreshes, store it in `sessionStorage` or `localStorage`.
 
-## 5. Update Sahid's information
+The `sessionId` identifies a conversation. It is not an authentication mechanism, so add ownership controls if you ever expose private user data.
 
-Edit `src/data/knowledgeBase.js`. The chatbot uses this file as its source of truth. Only include information intended to be public.
+## Updating the Chatbot's Knowledge
 
-## 6. Production checklist
+Edit `src/data/knowledgeBase.js`. The chatbot treats this file as its single source of truth, so only include information you want to be public.
 
-- Never commit `.env`; keep the Gemini API key on the backend.
-- Set `FRONTEND_ORIGIN` to the exact deployed frontend origin(s), comma-separated if needed.
-- Enable `DB_SSL=true` only when required by your PostgreSQL provider.
-- Use HTTPS in production.
-- Review rate limits and add abuse monitoring.
-- Set a data-retention policy for stored chat messages; add deletion support if needed.
-- If visitor messages may contain personal data, update your privacy notice.
-- Use a managed PostgreSQL provider and back up the database.
-- For multi-instance production deployments, consider a shared rate-limit store.
-- The simple knowledge-base approach does not use vector embeddings or RAG. Add those only if the portfolio content grows substantially.
+This project intentionally uses a simple knowledge-base file rather than vector embeddings or RAG. Consider adding those only if the portfolio content grows substantially. Chat sessions and messages are stored in PostgreSQL, but the knowledge base is not.
 
-## Notes
+## Project Structure
 
-This project stores chat sessions and messages in PostgreSQL. It does not store the knowledge base in the database; the editable JavaScript knowledge-base file is intentionally simple for a personal portfolio.
+```
+sahid-portfolio-server/
+├── src/
+│   ├── server.js            # Application entry point
+│   ├── data/
+│   │   └── knowledgeBase.js # Public information the chatbot answers from
+│   └── scripts/
+│       └── initDb.js        # Database table setup (npm run db:init)
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+## Production Checklist
+
+- Never commit `.env`. Keep the Gemini API key on the backend only.
+- Set `FRONTEND_ORIGIN` to the exact deployed frontend origin(s).
+- Enable `DB_SSL=true` only if your PostgreSQL provider requires it.
+- Serve the API over HTTPS.
+- Review the rate limits and add abuse monitoring.
+- For multi-instance deployments, use a shared rate-limit store.
+- Use a managed PostgreSQL provider and schedule backups.
+- Set a retention policy for stored chat messages, and add deletion support if needed.
+- If visitors may share personal data in chat, update your privacy notice.
+
+## Author
+
+**Sahid Khan** — Dubai, UAE
+
+- Portfolio: https://sahid-portfolio-ochre.vercel.app
+- GitHub: https://github.com/shahid0980
+
+## License
+
+©sahid khan
