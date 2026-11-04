@@ -15,7 +15,7 @@ app.use(helmet());
   origin: process.env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()),
   methods: ["GET", "POST"],
 }));*/
-// app.use(cors());
+app.use(cors());
 app.use(express.json({ limit: "10kb" }));
 
 
